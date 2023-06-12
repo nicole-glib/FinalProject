@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie List</title>
+</head>
+<body>
+    <h1>Movie List</h1>
+    <ul>
+        {% for movie in movies %}
+        <li><a href="/stream/{{ movie }}">{{ movie }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
