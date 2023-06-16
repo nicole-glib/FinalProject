@@ -57,19 +57,23 @@ def upload_movie():
             movies_col.insert_one(movie.__dict__)
             flash('Successfully uploaded')
             return redirect(request.url)
+        flash('incorrect file type')
+        return redirect(request.url)
     return render_template('upload_movie.html')
 
 @app.route('/upload-series', methods=['GET', 'POST'])
 def upload_series():
     if request.method == 'POST':
+        if (not request.form['name']):
+            flash('No Name')
+            return redirect(request.url)
 
         episodes = request.files.getlist('series')
 
         movies_allowed = []
         for i in range(0, len(episodes)):
             movies_allowed.append(allowed_movie_file(episodes[i].filename))
-        print(episodes)
-        print(len(episodes))
+
         if episodes and all(movies_allowed) and request.form['name']:
 
             for i in range(0, len(episodes)):
@@ -78,10 +82,11 @@ def upload_series():
             series = Series(request.form['name'], episodes)
 
             series_col.insert_one(series.__dict__)
-            print('Successfully uploaded')
 
             flash('Successfully uploaded')
             return redirect(request.url)
+        flash('incorrect file type')
+        return redirect(request.url)
     return render_template('upload_series.html')
 
 

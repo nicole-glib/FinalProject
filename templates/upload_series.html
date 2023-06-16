@@ -12,6 +12,15 @@
         <label for="inputVideo">Series</label>
         <input id="inputVideo" type=file name=series  required multiple>
         <input type=submit value=Upload>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
     </form>
 </body>
 </html>
