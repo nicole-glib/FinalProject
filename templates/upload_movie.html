@@ -1,16 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
 <body>
   <h1>Upload Movie</h1>
-    <form method=post enctype=multipart/form-data>
-        <label for="inputName">Name</label>
-        <input id="inputName" type="text" name="name" required>
-        <label for="inputVideo">Movie</label>
-        <input id="inputVideo" type=file name=movie required>
+    <form class="container" method=post enctype=multipart/form-data>
+        <div class="mb-3">
+            <label class="form-label" for="inputName">Name</label>
+            <input class="form-control" id="inputName" type="text" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-control" for="inputVideo">Movie</label>
+            <input class="form-control" id="inputVideo" type=file name=movie required>
+        </div>
         <input type=submit value=Upload>
     </form>
 </body>
