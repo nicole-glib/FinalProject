@@ -1,73 +1,161 @@
 import os
-from flask import Flask, render_template, send_file, send_from_directory, redirect, request
-from json import JSONDecodeError, JSONEncoder
-from flask_mongoengine import MongoEngine
-# from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+import bcrypt
+from flask import Flask, render_template, url_for, request, session, redirect, send_file, flash
+from pymongo import MongoClient
+import gridfs
+from bson import ObjectId
+
+from classes.Movie import Movie
+from classes.Series import Series
+from classes.User import User
 
 app = Flask(__name__)
-app.config['MONGODB_SETTINGS'] = {
-    'db': 'ElinoysDB',
-    'host': 'localhost',
-    'port': 27017,
-    'alias': 'default',
-    # 'username': 'your_username',
-    # 'password': 'your_password'
-}
+app.secret_key = 'Elinoy is the best'
 
-# db = MongoEngine(app)
+client = MongoClient('localhost', 27017)
 
-# class User(UserMixin, db.Document):
-#     username = db.StringField(unique=True)
-#     password = db.StringField()
+db = client.ElinoysDB
+
+fs = gridfs.GridFS(db)
+
+users_col = db.Users
+movies_col = db.Movies
+series_col = db.Series
+
+ALLOWED_VIDEO_EXTENSIONS = {'mp4'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 movies_folder = './movies'  # Replace with the actual path to your movie files
 
-# login_manager = LoginManager(app)
-# login_manager.login_view = 'login'
+def allowed_movie_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
 
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'POST':
-#         username = request.form.get('username')
-#         password = request.form.get('password')
-#
-#         user = User.objects(username=username).first()
-#         if user and user.password == password:
-#             login_user(user)
-#             return redirect('/')
-#         else:
-#             return 'Invalid username or password'
-#
-#     return render_template('login.html')
+def allowed_img_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+@app.route('/upload-movie', methods=['GET', 'POST'])
+def upload_movie():
+    if request.method == 'POST':
+        if(not request.form['name']):
+            flash('No Name')
+            return redirect(request.url)
+        # check if the post request has the file part
+        if 'movie' not in request.files:
+            flash('No file part')
 
-# @app.route('/logout')
-# @login_required
-# def logout():
-#     logout_user()
-#     return redirect('/')
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return User.objects(username=user_id).first()
+            return redirect(request.url)
+        file = request.files['movie']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+
+            return redirect(request.url)
+        if file and allowed_movie_file(file.filename):
+            movie = Movie(request.form['name'], fs.put(file))
+            movies_col.insert_one(movie.__dict__)
+            flash('Successfully uploaded')
+            return redirect(request.url)
+    return render_template('upload_movie.html')
+
+@app.route('/upload-series', methods=['GET', 'POST'])
+def upload_series():
+    if request.method == 'POST':
+
+        episodes = request.files.getlist('series')
+
+        movies_allowed = []
+        for i in range(0, len(episodes)):
+            movies_allowed.append(allowed_movie_file(episodes[i].filename))
+        print(episodes)
+        print(len(episodes))
+        if episodes and all(movies_allowed) and request.form['name']:
+
+            for i in range(0, len(episodes)):
+                episodes[i] = fs.put(episodes[i])
+
+            series = Series(request.form['name'], episodes)
+
+            series_col.insert_one(series.__dict__)
+            print('Successfully uploaded')
+
+            flash('Successfully uploaded')
+            return redirect(request.url)
+    return render_template('upload_series.html')
+
+
+@app.route("/signup", methods=['POST', 'GET'])
+def signup():
+    if request.method == 'POST':
+        new_user = User(request.form['username'], bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()))
+        user_exists = users_col.find_one({'username': new_user.username})
+
+        if user_exists:
+            flash(new_user.username + ' username already exists')
+            return redirect('/signup')
+        print(new_user)
+        users_col.insert_one(new_user.__dict__)
+        return redirect(url_for('login'))
+
+    return render_template('signup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        existing_user = users_col.find_one({'username': request.form['username']})
+
+        if existing_user:
+            if bcrypt.checkpw(request.form['password'].encode('utf-8'), existing_user['hashed_password']):
+                session['username'] = request.form['username']
+                return redirect(url_for('movie_list'))
+
+        flash('Username and password combination is wrong')
+        return render_template('login.html')
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def sign_out():
+    session.pop('username')
+    return redirect(url_for('home'))
 
 @app.route('/')
-# @login_required
+def home():
+    return render_template('home.html')
+
+@app.route('/list/movie')
 def movie_list():
-    movie_files = []
-    for filename in os.listdir(movies_folder):
-        if filename.endswith('.mp4'):
-            movie_files.append(filename)
-    return render_template('movie_list.html', movies=movie_files)
+    if 'username' in session:
+        movies_list = movies_col.find()
+        print(movies_list)
+
+        return render_template('movie_list.html', movies=movies_list)
+    return redirect(url_for('login'))
+
+@app.route('/list/series')
+def series_list():
+    if 'username' in session:
+        series_list = series_col.find()
+        print(series_list.__dict__)
+
+        return render_template('series_list.html', series_list=series_list)
+    return redirect(url_for('login'))
 
 @app.route('/stream/<filename>')
-# @login_required
 def stream_movie(filename):
-    movie_path = os.path.join(movies_folder, filename)
-    return send_file(movie_path, mimetype='video/mp4', conditional=True, etag=True)
+    if 'username' in session:
+        movie_id = ObjectId(filename)
+        video = fs.get(movie_id)
+        return send_file(video, mimetype='video/mp4', conditional=True, etag=True)
+    return redirect(url_for('login'))
 #
-# @app.route('/movies/<path:filename>')
-# @login_required
-# def get_movie(filename):
-#     return send_from_directory(movies_folder, filename)
+
 
 if __name__ == '__main__':
+    a = fs.put(b"hello world")
+    print(fs.get(a).read())
+    print(fs.get(a))
     app.run(host='0.0.0.0', port=8000)
+
+

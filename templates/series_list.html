@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Series List</title>
+</head>
+<body>
+    <h1>Series List</h1>
+    <a href="/list/movie">Movies</a>
+    <a href="/list/series">Series</a>
+
+    <ul>
+        {% for series in series_list %}
+        <li>{{ series.name }}</li>
+        <ul>
+            {% for episode in series.video_ids %}
+            <li><a href="/stream/{{ episode | safe}}">episode {{loop.index}}</a></li>
+
+            {% endfor %}
+        </ul>
+
+        {% endfor %}
+    </ul>
+<a href="/logout">logout</a>
+</body>
+</html>

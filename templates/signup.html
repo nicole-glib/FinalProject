@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <title>Login with mongodb flask</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
+  <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
+  <link href="../static/signup.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container">
+
+
+  <div class="container">
+    <h1>Signup</h1>
+    <form class="form-signin col justify-content-start" action="/signup" method="post">
+      <label for="inputName" class="sr-only">Username</label>
+      <input type="name" name="username" id="inputName" class="form-control" placeholder="Username" required autofocus>
+      <label for="inputPassword" class="sr-only">Password</label>
+      <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
+      <div class="container">
+        <a class="row" href="/login">login</a>
+
+
+        <button id="btnSignUp" class="btn btn-lg btn-secondary btn-block row" onclick = 'this.form.submit();' type="button">Signup</button>
+
+      </div>
+    </form>
+  </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</html>

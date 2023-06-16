@@ -5,10 +5,13 @@
 </head>
 <body>
     <h1>Movie List</h1>
+    <a href="/list/movie">Movies</a>
+    <a href="/list/series">Series</a>
     <ul>
         {% for movie in movies %}
-        <li><a href="/stream/{{ movie }}">{{ movie }}</a></li>
+        <li><a href="/stream/{{ movie.video_id | safe}}">{{ movie.name }}</a></li>
         {% endfor %}
     </ul>
+    <a href="/logout">logout</a>
 </body>
 </html>
