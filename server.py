@@ -36,30 +36,35 @@ def allowed_img_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 @app.route('/upload-movie', methods=['GET', 'POST'])
 def upload_movie():
-    if request.method == 'POST':
-        if(not request.form['name']):
-            flash('No Name')
-            return redirect(request.url)
-        # check if the post request has the file part
-        if 'movie' not in request.files:
-            flash('No file part')
+    if 'username' in session:
+        logged_user = users_col.find_one({'username': session["username"]})
+        if "is_admin" in logged_user and logged_user["is_admin"]:
 
-            return redirect(request.url)
-        file = request.files['movie']
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == '':
-            flash('No selected file')
+            if request.method == 'POST':
+                if(not request.form['name']):
+                    flash('No Name')
+                    return redirect(request.url)
+                # check if the post request has the file part
+                if 'movie' not in request.files:
+                    flash('No file part')
 
-            return redirect(request.url)
-        if file and allowed_movie_file(file.filename):
-            movie = Movie(request.form['name'], fs.put(file))
-            movies_col.insert_one(movie.__dict__)
-            flash('Successfully uploaded')
-            return redirect(request.url)
-        flash('incorrect file type')
-        return redirect(request.url)
-    return render_template('upload_movie.html')
+                    return redirect(request.url)
+                file = request.files['movie']
+                # If the user does not select a file, the browser submits an
+                # empty file without a filename.
+                if file.filename == '':
+                    flash('No selected file')
+
+                    return redirect(request.url)
+                if file and allowed_movie_file(file.filename):
+                    movie = Movie(request.form['name'], fs.put(file))
+                    movies_col.insert_one(movie.__dict__)
+                    flash('Successfully uploaded')
+                    return redirect(request.url)
+                flash('incorrect file type')
+                return redirect(request.url)
+            return render_template('upload_movie.html')
+    return redirect(url_for('home'))
 
 @app.route('/upload-series', methods=['GET', 'POST'])
 def upload_series():
