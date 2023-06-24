@@ -31,15 +31,21 @@ def allowed_movie_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
 
-def allowed_img_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
-@app.route('/upload-movie', methods=['GET', 'POST'])
-def upload_movie():
+def delete_movie(movie_id):
+    fs.delete(movie_id)
+    movies_col.delete_one({'video_id': movie_id})
+
+@app.route('/manager/movie/<id>', methods=['GET'])
+@app.route('/manager/movie', methods=['GET', 'POST'])
+def movie_manager(id=""):
     if 'username' in session:
         logged_user = users_col.find_one({'username': session["username"]})
         if "is_admin" in logged_user and logged_user["is_admin"]:
-
+            if id:
+                movie_id = ObjectId(id)
+                delete_movie(movie_id)
+                flash("Successfully deleted")
+                return redirect("/manager/movie")
             if request.method == 'POST':
                 if(not request.form['name']):
                     flash('No Name')
@@ -63,7 +69,10 @@ def upload_movie():
                     return redirect(request.url)
                 flash('incorrect file type')
                 return redirect(request.url)
-            return render_template('upload_movie.html')
+            movies_list = movies_col.find()
+            return render_template('upload_movie.html', movies=movies_list)
+
+
     return redirect(url_for('home'))
 
 @app.route('/upload-series', methods=['GET', 'POST'])
