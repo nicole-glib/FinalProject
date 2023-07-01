@@ -107,27 +107,26 @@ def upload_series():
 @app.route("/signup", methods=['POST', 'GET'])
 def signup():
     if request.method == 'POST':
-        new_user = User(request.form['username'], bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()))
-        user_exists = users_col.find_one({'username': new_user.username})
-
-        if user_exists:
+        new_user = User(request.form['username'], bcrypt.hashpw(request.form['password'].encode('utf-8'),bcrypt.gensalt()))
+        try:
+            User(users_col.find_one({'username': new_user.username}))
             flash(new_user.username + ' username already exists')
             return redirect('/signup')
-        print(new_user)
-        users_col.insert_one(new_user.__dict__)
-        return redirect(url_for('login'))
-
+        except:
+            new_user.signup()
+            return redirect(url_for('login'))
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        existing_user = users_col.find_one({'username': request.form['username']})
-
-        if existing_user:
-            if bcrypt.checkpw(request.form['password'].encode('utf-8'), existing_user['hashed_password']):
+        try:
+            existing_user = User(users_col.find_one({'username': request.form['username']}))
+            if existing_user.correct_login(request.form['password']):
                 session['username'] = request.form['username']
                 return redirect(url_for('movie_list'))
+        except:
+            pass
 
         flash('Username and password combination is wrong')
         return render_template('login.html')
@@ -172,9 +171,6 @@ def stream_movie(filename):
 
 
 if __name__ == '__main__':
-    a = fs.put(b"hello world")
-    print(fs.get(a).read())
-    print(fs.get(a))
     app.run(host='0.0.0.0', port=8000)
 
 
