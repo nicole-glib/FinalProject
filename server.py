@@ -122,7 +122,7 @@ def login():
     if request.method == 'POST':
         try:
             existing_user = User(users_col.find_one({'username': request.form['username']}))
-            if existing_user.correct_login(request.form['password']):
+            if existing_user.correct_password(request.form['password']):
                 session['username'] = request.form['username']
                 return redirect(url_for('movie_list'))
         except:

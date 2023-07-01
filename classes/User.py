@@ -21,7 +21,7 @@ class User:
         else:
             pass
 
-    def correct_login(self,password):
+    def correct_password(self,password):
         if bcrypt.checkpw(password.encode('utf-8'), self.hashed_password):
             return True
         return False
