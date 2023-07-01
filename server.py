@@ -64,7 +64,7 @@ def movie_manager(id=""):
                     return redirect(request.url)
                 if file and allowed_movie_file(file.filename):
                     movie = Movie(request.form['name'], fs.put(file))
-                    movies_col.insert_one(movie.__dict__)
+                    movies_col.insert_one(movie.to_db_format())
                     flash('Successfully uploaded')
                     return redirect(request.url)
                 flash('incorrect file type')
@@ -95,7 +95,7 @@ def upload_series():
 
             series = Series(request.form['name'], episodes)
 
-            series_col.insert_one(series.__dict__)
+            series_col.insert_one(series.to_db_format())
 
             flash('Successfully uploaded')
             return redirect(request.url)
@@ -121,7 +121,8 @@ def signup():
 def login():
     if request.method == 'POST':
         try:
-            existing_user = User(users_col.find_one({'username': request.form['username']}))
+            existing_user = users_col.find_one({'username': request.form['username']})
+            existing_user = User(existing_user['username'],existing_user['hashed_password'])
             if existing_user.correct_password(request.form['password']):
                 session['username'] = request.form['username']
                 return redirect(url_for('movie_list'))
@@ -155,7 +156,6 @@ def movie_list():
 def series_list():
     if 'username' in session:
         series_list = series_col.find()
-        print(series_list.__dict__)
 
         return render_template('series_list.html', series_list=series_list)
     return redirect(url_for('login'))
